@@ -4,6 +4,26 @@ import { useState, useEffect, useCallback } from "react";
 const VirtualSpace = () => {
   // Player position state
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [socket, setSocket] = useState<null | WebSocket>(null);
+  const [latestmessage, setLatestMessage] = useState("");
+  const [userMsg, setUserMsg] = useState("");
+
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:8080");
+    socket.onopen = () => {
+      console.log("browser connected");
+      setSocket(socket);
+    };
+
+    socket.onmessage = (message) => {
+      console.log("received msg is:", message.data);
+      setLatestMessage(message.data);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
 
   // Camera/viewport offset state (for centered player)
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
@@ -61,6 +81,10 @@ const VirtualSpace = () => {
     };
   }, [handleKeyPress]);
 
+  if (!socket) {
+    return <div> connecting to ws server</div>;
+  }
+
   return (
     <div className="relative w-full h-screen overflow-hidden bg-gray-100">
       {/* World container that moves opposite to player movement */}
@@ -113,6 +137,23 @@ const VirtualSpace = () => {
       <div className="absolute top-4 left-4 bg-white p-2 rounded shadow">
         <div>X: {Math.round(position.x)}</div>
         <div>Y: {Math.round(position.y)}</div>
+      </div>
+      <div className="absolute top-4 right-4 bg-white p-2 rounded shadow">
+        <div> latest msg is {latestmessage}</div>
+      </div>
+      <div className="absolute top-16 right-4 bg-white p-2 rounded shadow">
+        <input
+          onChange={(e) => {
+            setUserMsg(e.target.value);
+          }}
+        />
+        <button
+          onClick={() => {
+            socket.send(userMsg);
+          }}
+        >
+          send
+        </button>
       </div>
     </div>
   );
