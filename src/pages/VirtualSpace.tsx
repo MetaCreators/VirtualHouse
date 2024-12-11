@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import avatar1 from "../assets/avatar1.jpeg";
 import avatar2 from "../assets/avatar2.jpeg";
+import checkProximity from "@/lib/helperFns/checkProximity";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -13,8 +14,6 @@ const VirtualSpace = () => {
   const [latestMessage, setLatestMessage] = useState("");
   const [userMsg, setUserMsg] = useState("");
   const [proximityMessage, setProximityMessage] = useState<string | null>(null);
-
-  const PROXIMITY_THRESHOLD = 80;
 
   useEffect(() => {
     const socket = new WebSocket(import.meta.env.VITE_WS_SERVER_URL);
@@ -89,30 +88,35 @@ const VirtualSpace = () => {
       );
     }
 
-    checkProximity();
-  }, [position, socket, otherUsers]);
-
-  const checkProximity = () => {
-    let nearUser = null;
-
-    for (const user of otherUsers) {
-      const distance = Math.sqrt(
-        Math.pow(user.position.x - position.x, 2) +
-          Math.pow(user.position.y - position.y, 2)
-      );
-
-      if (distance < PROXIMITY_THRESHOLD) {
-        nearUser = user.id;
-        break;
-      }
-    }
-
-    if (nearUser) {
-      setProximityMessage(`User ${nearUser} is near you`);
+    const proximity = checkProximity(otherUsers, position);
+    if (proximity) {
+      setProximityMessage(`User ${proximity} is near you`);
     } else {
       setProximityMessage(null);
     }
-  };
+  }, [position, socket, otherUsers]);
+
+  // const checkProximity = () => {
+  //   let nearUser = null;
+
+  //   for (const user of otherUsers) {
+  //     const distance = Math.sqrt(
+  //       Math.pow(user.position.x - position.x, 2) +
+  //         Math.pow(user.position.y - position.y, 2)
+  //     );
+
+  //     if (distance < PROXIMITY_THRESHOLD) {
+  //       nearUser = user.id;
+  //       break;
+  //     }
+  //   }
+
+  //   if (nearUser) {
+  //     setProximityMessage(`User ${nearUser} is near you`);
+  //   } else {
+  //     setProximityMessage(null);
+  //   }
+  // };
 
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
   const SPEED = 5;
