@@ -12,7 +12,7 @@ const VirtualSpace = () => {
   const [userMsg, setUserMsg] = useState("");
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8080");
+    const socket = new WebSocket(import.meta.env.VITE_WS_SERVER_URL);
 
     socket.onopen = () => {
       console.log("Connected to WebSocket server");
