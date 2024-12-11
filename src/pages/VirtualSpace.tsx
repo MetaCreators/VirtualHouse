@@ -4,6 +4,7 @@ import checkProximity from "@/lib/helperFns/checkProximity";
 import CurrentUser from "@/components/UserAvatar/CurrentUser";
 import OtherUser from "@/components/UserAvatar/OtherUser";
 import { handleKeyPress } from "@/lib/helperFns/handleKeyPress";
+import UserDetails from "@/components/UserDetails/UserDetails";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -154,11 +155,7 @@ const VirtualSpace = () => {
           <OtherUser user={user} />
         ))}
       </div>
-      <div className="absolute top-4 left-4 bg-white p-2 rounded shadow">
-        <div>Your ID: {userId}</div>
-        <div>X: {Math.round(position.x)}</div>
-        <div>Y: {Math.round(position.y)}</div>
-      </div>
+      <UserDetails userId={userId} position={position} />
       <div className="absolute top-4 right-4 bg-white p-2 rounded shadow">
         <div>Latest message: {latestMessage}</div>
       </div>
