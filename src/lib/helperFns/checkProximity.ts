@@ -1,9 +1,7 @@
+import { CurrUserPosType } from "@/types/UserPositionType";
+
 const PROXIMITY_THRESHOLD = 80;
 
-interface CurrUserPosType{
-    x:number
-    y: number
-}
 
 export default function checkProximity(otherUsers: Array<{ id: string; position: { x: number; y: number } }>, currentUserPosition:CurrUserPosType) {
     let nearUser = null;

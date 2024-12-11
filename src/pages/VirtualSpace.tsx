@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
-import avatar1 from "../assets/avatar1.jpeg";
 import avatar2 from "../assets/avatar2.jpeg";
 import checkProximity from "@/lib/helperFns/checkProximity";
+import CurrentUser from "@/components/UserAvatar/CurrentUser";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -19,7 +19,7 @@ const VirtualSpace = () => {
     const socket = new WebSocket(import.meta.env.VITE_WS_SERVER_URL);
 
     socket.onopen = () => {
-      console.log("Connected to WebSocket server");
+      console.log("Connected to Server");
       setSocket(socket);
     };
 
@@ -95,28 +95,6 @@ const VirtualSpace = () => {
       setProximityMessage(null);
     }
   }, [position, socket, otherUsers]);
-
-  // const checkProximity = () => {
-  //   let nearUser = null;
-
-  //   for (const user of otherUsers) {
-  //     const distance = Math.sqrt(
-  //       Math.pow(user.position.x - position.x, 2) +
-  //         Math.pow(user.position.y - position.y, 2)
-  //     );
-
-  //     if (distance < PROXIMITY_THRESHOLD) {
-  //       nearUser = user.id;
-  //       break;
-  //     }
-  //   }
-
-  //   if (nearUser) {
-  //     setProximityMessage(`User ${nearUser} is near you`);
-  //   } else {
-  //     setProximityMessage(null);
-  //   }
-  // };
 
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
   const SPEED = 5;
@@ -195,16 +173,8 @@ const VirtualSpace = () => {
             top: "-1500px",
           }}
         />
-        <div
-          className="absolute w-12 h-12 flex justify-center items-center"
-          style={{
-            left: position.x - 24,
-            top: position.y - 24,
-            transition: "all 0.1s linear",
-          }}
-        >
-          <img src={avatar1} />
-        </div>
+
+        <CurrentUser x={position.x} y={position.y} />
         {otherUsers.map((user) => (
           <div
             key={user.id}
