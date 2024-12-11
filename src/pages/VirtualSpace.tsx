@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
+import checkProximity from "@/lib/helperFns/checkProximity";
+import CurrentUser from "@/components/UserAvatar/CurrentUser";
+import OtherUser from "@/components/UserAvatar/OtherUser";
+import { handleKeyPress } from "@/lib/helperFns/handleKeyPress";
+import UserDetails from "@/components/UserDetails/UserDetails";
+import GroupChat from "@/components/Chat/GroupChat/GroupChat";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -10,12 +16,13 @@ const VirtualSpace = () => {
   >([]);
   const [latestMessage, setLatestMessage] = useState("");
   const [userMsg, setUserMsg] = useState("");
+  const [proximityMessage, setProximityMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8080");
+    const socket = new WebSocket(import.meta.env.VITE_WS_SERVER_URL);
 
     socket.onopen = () => {
-      console.log("Connected to WebSocket server");
+      console.log("Connected to Server");
       setSocket(socket);
     };
 
@@ -66,13 +73,6 @@ const VirtualSpace = () => {
     };
   }, [userId]);
 
-  // Camera/viewport offset state (for centered player)
-  const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
-
-  // Movement speed in pixels
-  const SPEED = 5;
-
-  // Update camera to follow player
   useEffect(() => {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -82,7 +82,6 @@ const VirtualSpace = () => {
       y: -(position.y - viewportHeight / 2),
     });
 
-    // Send move to server
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(
         JSON.stringify({
@@ -91,48 +90,29 @@ const VirtualSpace = () => {
         })
       );
     }
-  }, [position, socket]);
 
-  // Handle keyboard movement
-  const handleKeyPress = useCallback((e: KeyboardEvent) => {
-    const movement = { x: 0, y: 0 };
-
-    switch (e.key) {
-      case "ArrowUp":
-      case "w":
-        movement.y = -SPEED;
-        break;
-      case "ArrowDown":
-      case "s":
-        movement.y = SPEED;
-        break;
-      case "ArrowLeft":
-      case "a":
-        movement.x = -SPEED;
-        break;
-      case "ArrowRight":
-      case "d":
-        movement.x = SPEED;
-        break;
-      default:
-        return;
+    const proximity = checkProximity(otherUsers, position);
+    if (proximity) {
+      setProximityMessage(`User ${proximity} is near you`);
+    } else {
+      setProximityMessage(null);
     }
+  }, [position, socket, otherUsers]);
 
-    setPosition((prev) => ({
-      x: prev.x + movement.x,
-      y: prev.y + movement.y,
-    }));
+  const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
+  const SPEED = 5;
+
+  const onKeyPress = useCallback((e: KeyboardEvent) => {
+    handleKeyPress(e, setPosition, SPEED);
   }, []);
 
-  // Set up keyboard listeners
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyPress);
+    window.addEventListener("keydown", onKeyPress);
     return () => {
-      window.removeEventListener("keydown", handleKeyPress);
+      window.removeEventListener("keydown", onKeyPress);
     };
-  }, [handleKeyPress]);
+  }, [onKeyPress]);
 
-  // Send chat message
   const sendMessage = () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(
@@ -151,7 +131,6 @@ const VirtualSpace = () => {
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-gray-100">
-      {/* World container that moves opposite to player movement */}
       <div
         className="absolute"
         style={{
@@ -159,7 +138,6 @@ const VirtualSpace = () => {
           transition: "transform 0.1s linear",
         }}
       >
-        {/* Grid background */}
         <div
           className="absolute"
           style={{
@@ -173,45 +151,23 @@ const VirtualSpace = () => {
           }}
         />
 
-        {/* Main player avatar */}
-        <div
-          className="absolute w-12 h-12 bg-blue-500 rounded-full flex justify-center items-center"
-          style={{
-            left: position.x - 24,
-            top: position.y - 24,
-            transition: "all 0.1s linear",
-          }}
-        >
-          {userId}
-        </div>
-
-        {/* Other connected users */}
+        <CurrentUser x={position.x} y={position.y} />
         {otherUsers.map((user) => (
-          <div
-            key={user.id}
-            className="absolute w-12 h-12 bg-red-500 rounded-full flex justify-center items-center"
-            style={{
-              left: user.position.x - 24,
-              top: user.position.y - 24,
-              transition: "all 0.1s linear",
-            }}
-          >
-            {user.id}
-          </div>
+          <OtherUser user={user} />
         ))}
       </div>
+      <UserDetails userId={userId} position={position} />
 
-      {/* UI overlays */}
-      <div className="absolute top-4 left-4 bg-white p-2 rounded shadow">
-        <div>Your ID: {userId}</div>
-        <div>X: {Math.round(position.x)}</div>
-        <div>Y: {Math.round(position.y)}</div>
-      </div>
+      <GroupChat
+        latestMessage={latestMessage}
+        userMsg={userMsg}
+        setUserMsg={setUserMsg}
+        sendMessage={sendMessage}
+      />
 
       <div className="absolute top-4 right-4 bg-white p-2 rounded shadow">
-        <div>Latest message: By userId: {latestMessage}</div>
+        <div>Latest message: {latestMessage}</div>
       </div>
-
       <div className="absolute top-16 right-4 bg-white p-2 rounded shadow">
         <input
           value={userMsg}
@@ -220,6 +176,11 @@ const VirtualSpace = () => {
         />
         <button onClick={sendMessage}>Send</button>
       </div>
+      {proximityMessage && (
+        <div className="absolute top-28 right-4 bg-red-100 text-red-600 p-2 rounded shadow">
+          {proximityMessage}
+        </div>
+      )}
     </div>
   );
 };
