@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
-import avatar2 from "../assets/avatar2.jpeg";
 import checkProximity from "@/lib/helperFns/checkProximity";
 import CurrentUser from "@/components/UserAvatar/CurrentUser";
+import OtherUser from "@/components/UserAvatar/OtherUser";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -176,17 +176,7 @@ const VirtualSpace = () => {
 
         <CurrentUser x={position.x} y={position.y} />
         {otherUsers.map((user) => (
-          <div
-            key={user.id}
-            className="absolute w-12 h-12 flex justify-center items-center"
-            style={{
-              left: user.position.x - 24,
-              top: user.position.y - 24,
-              transition: "all 0.1s linear",
-            }}
-          >
-            <img src={avatar2} />
-          </div>
+          <OtherUser user={user} />
         ))}
       </div>
       <div className="absolute top-4 left-4 bg-white p-2 rounded shadow">
