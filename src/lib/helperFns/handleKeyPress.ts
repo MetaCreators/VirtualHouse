@@ -1,13 +1,9 @@
+import { CurrUserPosType } from "@/types/UserPositionType";
 import { Dispatch, SetStateAction } from "react";
-
-interface Position {
-  x: number;
-  y: number;
-}
 
 export const handleKeyPress = (
   e: KeyboardEvent,
-  setPosition: Dispatch<SetStateAction<Position>>,
+  setPosition: Dispatch<SetStateAction<CurrUserPosType>>,
   SPEED: number
 ) => {
   const movement = { x: 0, y: 0 };

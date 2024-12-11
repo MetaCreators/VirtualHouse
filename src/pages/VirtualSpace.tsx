@@ -5,6 +5,7 @@ import CurrentUser from "@/components/UserAvatar/CurrentUser";
 import OtherUser from "@/components/UserAvatar/OtherUser";
 import { handleKeyPress } from "@/lib/helperFns/handleKeyPress";
 import UserDetails from "@/components/UserDetails/UserDetails";
+import GroupChat from "@/components/Chat/GroupChat/GroupChat";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -156,6 +157,14 @@ const VirtualSpace = () => {
         ))}
       </div>
       <UserDetails userId={userId} position={position} />
+
+      <GroupChat
+        latestMessage={latestMessage}
+        userMsg={userMsg}
+        setUserMsg={setUserMsg}
+        sendMessage={sendMessage}
+      />
+
       <div className="absolute top-4 right-4 bg-white p-2 rounded shadow">
         <div>Latest message: {latestMessage}</div>
       </div>
