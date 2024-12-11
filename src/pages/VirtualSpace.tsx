@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
+import avatar1 from "../assets/avatar1.jpeg";
+import avatar2 from "../assets/avatar2.jpeg";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -175,14 +177,15 @@ const VirtualSpace = () => {
 
         {/* Main player avatar */}
         <div
-          className="absolute w-12 h-12 bg-blue-500 rounded-full flex justify-center items-center"
+          className="absolute w-12 h-12 flex justify-center items-center"
           style={{
             left: position.x - 24,
             top: position.y - 24,
             transition: "all 0.1s linear",
           }}
         >
-          {userId}
+          {/* {userId} */}
+          <img src={avatar1} />
         </div>
 
         {/* Other connected users */}
@@ -196,7 +199,8 @@ const VirtualSpace = () => {
               transition: "all 0.1s linear",
             }}
           >
-            {user.id}
+            {/* {user.id} */}
+            <img src={avatar2} />
           </div>
         ))}
       </div>
