@@ -192,7 +192,7 @@ const VirtualSpace = () => {
         {otherUsers.map((user) => (
           <div
             key={user.id}
-            className="absolute w-12 h-12 bg-red-500 rounded-full flex justify-center items-center"
+            className="absolute w-12 h-12 flex justify-center items-center"
             style={{
               left: user.position.x - 24,
               top: user.position.y - 24,
