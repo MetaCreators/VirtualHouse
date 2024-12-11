@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import checkProximity from "@/lib/helperFns/checkProximity";
 import CurrentUser from "@/components/UserAvatar/CurrentUser";
 import OtherUser from "@/components/UserAvatar/OtherUser";
+import { handleKeyPress } from "@/lib/helperFns/handleKeyPress";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -99,42 +100,16 @@ const VirtualSpace = () => {
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
   const SPEED = 5;
 
-  const handleKeyPress = useCallback((e: KeyboardEvent) => {
-    const movement = { x: 0, y: 0 };
-
-    switch (e.key) {
-      case "ArrowUp":
-      case "w":
-        movement.y = -SPEED;
-        break;
-      case "ArrowDown":
-      case "s":
-        movement.y = SPEED;
-        break;
-      case "ArrowLeft":
-      case "a":
-        movement.x = -SPEED;
-        break;
-      case "ArrowRight":
-      case "d":
-        movement.x = SPEED;
-        break;
-      default:
-        return;
-    }
-
-    setPosition((prev) => ({
-      x: prev.x + movement.x,
-      y: prev.y + movement.y,
-    }));
+  const onKeyPress = useCallback((e: KeyboardEvent) => {
+    handleKeyPress(e, setPosition, SPEED);
   }, []);
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyPress);
+    window.addEventListener("keydown", onKeyPress);
     return () => {
-      window.removeEventListener("keydown", handleKeyPress);
+      window.removeEventListener("keydown", onKeyPress);
     };
-  }, [handleKeyPress]);
+  }, [onKeyPress]);
 
   const sendMessage = () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
