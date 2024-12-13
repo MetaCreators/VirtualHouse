@@ -5,6 +5,7 @@ import OtherUser from "@/components/UserAvatar/OtherUser";
 import { handleKeyPress } from "@/lib/helperFns/handleKeyPress";
 import UserDetails from "@/components/UserDetails/UserDetails";
 import GroupChat from "@/components/Chat/GroupChat/GroupChat";
+import { Button } from "@/components/ui/button";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -16,6 +17,7 @@ const VirtualSpace = () => {
   const [latestMessage, setLatestMessage] = useState("");
   const [userMsg, setUserMsg] = useState("");
   const [proximityMessage, setProximityMessage] = useState<string | null>(null);
+  const [nearUser, setNearUser] = useState<number | null>(null);
 
   useEffect(() => {
     const socket = new WebSocket(import.meta.env.VITE_WS_SERVER_URL);
@@ -74,6 +76,7 @@ const VirtualSpace = () => {
                 setProximityMessage(
                   `User/s ${nearbyUsers.join(", ")} is near you`
                 );
+                setNearUser(nearbyUsers);
               }
             } else {
               setProximityMessage(null);
@@ -204,8 +207,13 @@ const VirtualSpace = () => {
         <button onClick={sendMessage}>Send</button>
       </div>
       {proximityMessage && (
-        <div className="absolute top-28 right-4 bg-red-100 text-red-600 p-2 rounded shadow">
-          {proximityMessage}
+        <div>
+          <div className="absolute top-28 right-4 bg-red-100 text-red-600 p-2 rounded shadow">
+            {proximityMessage}
+          </div>
+          <Button className="absolute top-48 right-4  p-2 rounded shadow">
+            Click to Chat with user {nearUser}
+          </Button>
         </div>
       )}
     </div>
