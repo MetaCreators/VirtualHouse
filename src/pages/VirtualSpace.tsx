@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
-import checkProximity from "@/lib/helperFns/checkProximity";
 import CurrentUser from "@/components/UserAvatar/CurrentUser";
 import OtherUser from "@/components/UserAvatar/OtherUser";
 import { handleKeyPress } from "@/lib/helperFns/handleKeyPress";
@@ -21,54 +20,89 @@ const VirtualSpace = () => {
   useEffect(() => {
     const socket = new WebSocket(import.meta.env.VITE_WS_SERVER_URL);
 
-    socket.onopen = () => {
+    const handleOpen = () => {
       console.log("Connected to Server");
       setSocket(socket);
     };
 
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const message = JSON.parse(event.data);
 
-      switch (message.type) {
-        case "userId":
-          setUserId(message.id);
-          break;
+        switch (message.type) {
+          case "userId":
+            setUserId(message.id);
+            break;
 
-        case "userList":
-          setOtherUsers(
-            message.users.filter((user: any) => user.id !== userId)
-          );
-          break;
+          case "userList":
+            setOtherUsers(
+              message.users.filter((user: any) => user.id !== userId)
+            );
+            break;
 
-        case "userMove":
-          if (message.userId !== userId) {
-            setOtherUsers((prevUsers) => {
-              const updatedUsers = prevUsers.map((user) =>
-                user.id === message.userId
-                  ? { ...user, position: message.position }
-                  : user
-              );
-              const userExists = prevUsers.some(
-                (user) => user.id === message.userId
-              );
-              if (!userExists) {
-                updatedUsers.push({
-                  id: message.userId,
-                  position: message.position,
-                });
+          case "userMove":
+            if (message.userId !== userId) {
+              setOtherUsers((prevUsers) => {
+                const updatedUsers = prevUsers.map((user) =>
+                  user.id === message.userId
+                    ? { ...user, position: message.position }
+                    : user
+                );
+                const userExists = prevUsers.some(
+                  (user) => user.id === message.userId
+                );
+                if (!userExists) {
+                  updatedUsers.push({
+                    id: message.userId,
+                    position: message.position,
+                  });
+                }
+                return updatedUsers;
+              });
+            }
+            break;
+
+          case "chat":
+            setLatestMessage(`${message.userId}: ${message.message}`);
+            break;
+
+          case "proximity":
+            console.log("Proximity message received:", message);
+            if (message.currentUserId === userId && message.nearbyUsers) {
+              const nearbyUsers = message.nearbyUsers;
+              if (nearbyUsers.length > 0) {
+                setProximityMessage(
+                  `User/s ${nearbyUsers.join(", ")} is near you`
+                );
               }
-              return updatedUsers;
-            });
-          }
-          break;
-
-        case "chat":
-          setLatestMessage(`${message.userId}: ${message.message}`);
-          break;
+            } else {
+              setProximityMessage(null);
+            }
+            break;
+        }
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error);
       }
     };
 
+    const handleError = (error: Event) => {
+      console.error("WebSocket error:", error);
+    };
+
+    const handleClose = () => {
+      console.log("WebSocket connection closed");
+    };
+
+    socket.addEventListener("open", handleOpen);
+    socket.addEventListener("message", handleMessage);
+    socket.addEventListener("error", handleError);
+    socket.addEventListener("close", handleClose);
+
     return () => {
+      socket.removeEventListener("open", handleOpen);
+      socket.removeEventListener("message", handleMessage);
+      socket.removeEventListener("error", handleError);
+      socket.removeEventListener("close", handleClose);
       socket.close();
     };
   }, [userId]);
@@ -90,14 +124,7 @@ const VirtualSpace = () => {
         })
       );
     }
-
-    const proximity = checkProximity(otherUsers, position);
-    if (proximity) {
-      setProximityMessage(`User ${proximity} is near you`);
-    } else {
-      setProximityMessage(null);
-    }
-  }, [position, socket, otherUsers]);
+  }, [position, socket, otherUsers, userId]);
 
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
   const SPEED = 5;
