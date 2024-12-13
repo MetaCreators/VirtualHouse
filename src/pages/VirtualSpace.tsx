@@ -196,7 +196,7 @@ const VirtualSpace = () => {
       />
 
       <div className="absolute top-4 right-4 bg-white p-2 rounded shadow">
-        <div>Latest message: {latestMessage}</div>
+        <div>Latest message by user: {latestMessage}</div>
       </div>
       <div className="absolute top-16 right-4 bg-white p-2 rounded shadow">
         <input
@@ -213,6 +213,9 @@ const VirtualSpace = () => {
           </div>
           <Button className="absolute top-48 right-4  p-2 rounded shadow">
             Click to Chat with user {nearUser}
+          </Button>
+          <Button className="absolute top-60 right-4  p-2 rounded shadow">
+            Click to video call user {nearUser}
           </Button>
         </div>
       )}
