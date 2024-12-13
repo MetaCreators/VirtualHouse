@@ -20,7 +20,7 @@ const VirtualSpace = () => {
   const [nearUser, setNearUser] = useState<number | null>(null);
 
   useEffect(() => {
-    const socket = new WebSocket(import.meta.env.VITE_WS_SERVER_URL);
+    const socket = new WebSocket(import.meta.env.VITE_WS_SERVER_URL + "/chat");
 
     const handleOpen = () => {
       console.log("Connected to Server");
