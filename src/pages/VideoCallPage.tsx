@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-//import React, { useRef } from "react";
+import { useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import io from "socket.io-client";
 //import { types as mediasoupClient } from "mediasoup-client";
 
 const VideoCallPage: React.FC = () => {
-  // const localVideoRef = useRef<HTMLVideoElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
   // const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   const socket = io("http://localhost:8080");
@@ -50,41 +51,41 @@ const VideoCallPage: React.FC = () => {
   // let producer: mediasoupClient.Producer;
   // let consumer: mediasoupClient.Consumer;
 
-  // let params: {
-  //   track?: MediaStreamTrack;
-  //   encodings: { rid: string; maxBitrate: number; scalabilityMode: string }[];
-  //   codecOptions: { videoGoogleStartBitrate: number };
-  // } = {
-  //   encodings: [
-  //     { rid: "r0", maxBitrate: 100000, scalabilityMode: "S1T3" },
-  //     { rid: "r1", maxBitrate: 300000, scalabilityMode: "S1T3" },
-  //     { rid: "r2", maxBitrate: 900000, scalabilityMode: "S1T3" },
-  //   ],
-  //   codecOptions: {
-  //     videoGoogleStartBitrate: 1000,
-  //   },
-  // };
+  let params: {
+    track?: MediaStreamTrack;
+    encodings: { rid: string; maxBitrate: number; scalabilityMode: string }[];
+    codecOptions: { videoGoogleStartBitrate: number };
+  } = {
+    encodings: [
+      { rid: "r0", maxBitrate: 100000, scalabilityMode: "S1T3" },
+      { rid: "r1", maxBitrate: 300000, scalabilityMode: "S1T3" },
+      { rid: "r2", maxBitrate: 900000, scalabilityMode: "S1T3" },
+    ],
+    codecOptions: {
+      videoGoogleStartBitrate: 1000,
+    },
+  };
 
-  // const streamSuccess = async (stream: MediaStream) => {
-  //   if (localVideoRef.current) {
-  //     localVideoRef.current.srcObject = stream;
-  //   }
-  //   const track = stream.getVideoTracks()[0];
-  //   params = { track, ...params };
-  // };
+  const streamSuccess = async (stream: MediaStream) => {
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = stream;
+    }
+    const track = stream.getVideoTracks()[0];
+    params = { track, ...params };
+  };
 
-  // const getLocalStream = () => {
-  //   navigator.mediaDevices
-  //     .getUserMedia({
-  //       audio: false,
-  //       video: {
-  //         width: { min: 640, max: 1920 },
-  //         height: { min: 400, max: 1080 },
-  //       },
-  //     })
-  //     .then(streamSuccess)
-  //     .catch((error) => console.log(error.message));
-  // };
+  const getLocalStream = () => {
+    navigator.mediaDevices
+      .getUserMedia({
+        audio: false,
+        video: {
+          width: { min: 640, max: 1920 },
+          height: { min: 400, max: 1080 },
+        },
+      })
+      .then(streamSuccess)
+      .catch((error) => console.log(error.message));
+  };
 
   // const createDevice = async () => {
   //   try {
@@ -271,7 +272,14 @@ const VideoCallPage: React.FC = () => {
     //     Connect Recv Transport & Consume
     //   </button>
     // </div>
-    <div>hi</div>
+    <div>
+      <Button onClick={getLocalStream}>start your video</Button>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-black">
+          <video ref={localVideoRef} autoPlay className="w-96"></video>{" "}
+        </div>
+      </div>
+    </div>
   );
 };
 
