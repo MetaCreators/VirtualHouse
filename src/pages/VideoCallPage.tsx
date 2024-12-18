@@ -32,6 +32,9 @@ const VideoCallPage: React.FC = () => {
     socket.on("hello", (msg: any) => {
       console.log(msg);
     });
+    socket.on("new-user", (msg: any) => {
+      console.log(msg);
+    });
 
     return () => {
       socket.disconnect();
