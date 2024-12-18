@@ -6,6 +6,7 @@ import { handleKeyPress } from "@/lib/helperFns/handleKeyPress";
 import UserDetails from "@/components/UserDetails/UserDetails";
 import GroupChat from "@/components/Chat/GroupChat/GroupChat";
 import { Button } from "@/components/ui/button";
+import VideoCall from "@/components/VideoCall/VideoCall";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -217,6 +218,7 @@ const VirtualSpace = () => {
           <Button className="absolute top-60 right-4  p-2 rounded shadow">
             Click to video call user {nearUser}
           </Button>
+          <VideoCall />
         </div>
       )}
     </div>
