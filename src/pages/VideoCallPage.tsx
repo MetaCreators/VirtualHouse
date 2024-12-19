@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import io from "socket.io-client";
+import * as mediasoupClient from "mediasoup-client";
+
 //import { types as mediasoupClient } from "mediasoup-client";
 
 const VideoCallPage: React.FC = () => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
+  const [rtpCapabilities, setRtpCapabilities] =
+    useState<mediasoupClient.types.RtpCapabilities | null>(null);
   // const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const deviceRef = useRef<mediasoupClient.Device | null>(null); //check this=> do we need usestate/useeffect here ?
 
   const socket = io("http://localhost:8080");
   console.log("reached here");
@@ -87,25 +92,30 @@ const VideoCallPage: React.FC = () => {
       .catch((error) => console.log(error.message));
   };
 
-  // const createDevice = async () => {
-  //   try {
-  //     device = new mediasoupClient.Device();
-  //     await device.load({ routerRtpCapabilities: rtpCapabilities });
-  //     console.log("RTP Capabilities", device.rtpCapabilities);
-  //   } catch (error) {
-  //     console.error(error);
-  //     if ((error as any).name === "UnsupportedError") {
-  //       console.warn("Browser not supported");
-  //     }
-  //   }
-  // };
+  const createDevice = async () => {
+    try {
+      const device = new mediasoupClient.Device();
+      deviceRef.current = device;
+      if (rtpCapabilities) {
+        await device.load({ routerRtpCapabilities: rtpCapabilities });
+        console.log("RTP Capabilities", device.rtpCapabilities);
+      } else {
+        console.warn("RTP Capabilities not set");
+      }
+    } catch (error) {
+      console.error(error);
+      if ((error as any).name === "UnsupportedError") {
+        console.warn("Browser not supported");
+      }
+    }
+  };
 
-  // const getRtpCapabilities = () => {
-  //   socket.emit("getRtpCapabilities", (data: any) => {
-  //     console.log(`Router RTP Capabilities... ${data.rtpCapabilities}`);
-  //     rtpCapabilities = data.rtpCapabilities;
-  //   });
-  // };
+  const getRtpCapabilities = () => {
+    socket.emit("getRtpCapabilities", (rtpCapabilities: any) => {
+      console.log(`Router RTP Capabilities... ${rtpCapabilities}`);
+      setRtpCapabilities(rtpCapabilities);
+    });
+  };
 
   // const createSendTransport = () => {
   //   socket.emit(
@@ -279,6 +289,12 @@ const VideoCallPage: React.FC = () => {
           <video ref={localVideoRef} autoPlay className="w-96"></video>{" "}
         </div>
       </div>
+      <Button
+        onClick={getRtpCapabilities}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Get RTP Capabilities
+      </Button>
     </div>
   );
 };
