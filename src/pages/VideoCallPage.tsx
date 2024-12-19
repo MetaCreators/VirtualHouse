@@ -5,14 +5,21 @@ import { useEffect } from "react";
 import io from "socket.io-client";
 import * as mediasoupClient from "mediasoup-client";
 
-//import { types as mediasoupClient } from "mediasoup-client";
-
 const VideoCallPage: React.FC = () => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const [rtpCapabilities, setRtpCapabilities] =
     useState<mediasoupClient.types.RtpCapabilities | null>(null);
-  // const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const deviceRef = useRef<mediasoupClient.Device | null>(null); //check this=> do we need usestate/useeffect here ?
+
+  const deviceRef = useRef<mediasoupClient.Device | null>(null);
+  const producerTransportRef = useRef<mediasoupClient.types.Transport | null>(
+    null
+  );
+  const consumerTransportRef = useRef<mediasoupClient.types.Transport | null>(
+    null
+  );
+  const producerRef = useRef<mediasoupClient.types.Producer | null>(null);
+  const consumerRef = useRef<mediasoupClient.types.Consumer | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   const socket = io("http://localhost:8080");
   console.log("reached here");
@@ -48,13 +55,6 @@ const VideoCallPage: React.FC = () => {
   }, []);
 
   console.log("reached here1");
-
-  // let device: mediasoupClient.Device;
-  // let rtpCapabilities: any;
-  // let producerTransport: mediasoupClient.Transport;
-  // let consumerTransport: mediasoupClient.Transport;
-  // let producer: mediasoupClient.Producer;
-  // let consumer: mediasoupClient.Consumer;
 
   let params: {
     track?: MediaStreamTrack;
@@ -110,183 +110,175 @@ const VideoCallPage: React.FC = () => {
     }
   };
 
-  const getRtpCapabilities = () => {
-    socket.emit("getRtpCapabilities", (rtpCapabilities: any) => {
-      console.log(`Router RTP Capabilities... ${rtpCapabilities}`);
-      setRtpCapabilities(rtpCapabilities);
+  const getRtpCapabilities = async () => {
+    await socket.emit("getRtpCapabilities", (data: any) => {
+      console.log(`Router RTP Capabilities... ${data.rtpCapabilities}`);
+      setRtpCapabilities(data.rtpCapabilities);
     });
   };
 
-  // const createSendTransport = () => {
-  //   socket.emit(
-  //     "createWebRtcTransport",
-  //     { sender: true },
-  //     ({ params }: any) => {
-  //       if (params.error) {
-  //         console.error(params.error);
-  //         return;
-  //       }
+  const createSendTransport = async () => {
+    await socket.emit(
+      "createWebRtcTransport",
+      { sender: true },
+      ({ params }: any) => {
+        if (params.error) {
+          console.log(params.error);
+          return;
+        }
 
-  //       producerTransport = device.createSendTransport(params);
+        console.log(params);
 
-  //       producerTransport.on(
-  //         "connect",
-  //         async ({ dtlsParameters }, callback, errback) => {
-  //           try {
-  //             await socket.emit("transport-connect", { dtlsParameters });
-  //             callback();
-  //           } catch (error: any) {
-  //             errback(error);
-  //           }
-  //         }
-  //       );
+        if (deviceRef.current) {
+          producerTransportRef.current =
+            deviceRef.current.createSendTransport(params);
+        } else {
+          console.warn("Device is not initialized.");
+          return;
+        }
+        producerTransportRef.current?.on(
+          "connect",
+          async ({ dtlsParameters }: any, callback: any, errback: any) => {
+            try {
+              await socket.emit("transport-connect", {
+                //transportId: producerTransportRef.current?.id,
+                dtlsParameters: dtlsParameters,
+              });
 
-  //       producerTransport.on(
-  //         "produce",
-  //         async (parameters, callback, errback) => {
-  //           try {
-  //             await socket.emit(
-  //               "transport-produce",
-  //               {
-  //                 kind: parameters.kind,
-  //                 rtpParameters: parameters.rtpParameters,
-  //                 appData: parameters.appData,
-  //               },
-  //               ({ id }: any) => callback({ id })
-  //             );
-  //           } catch (error: any) {
-  //             errback(error);
-  //           }
-  //         }
-  //       );
-  //     }
-  //   );
-  // };
+              callback();
+            } catch (error) {
+              errback(error);
+            }
+          }
+        );
 
-  // const connectSendTransport = async () => {
-  //   producer = await producerTransport.produce(params);
+        producerTransportRef.current?.on(
+          "produce",
+          async (parameters: any, callback: any, errback: any) => {
+            console.log(parameters);
+            try {
+              await socket.emit(
+                "transport-produce",
+                {
+                  //transportId: producerTransportRef.current?.id,
+                  kind: parameters.kind,
+                  rtpParameters: parameters.rtpParameters,
+                  appData: parameters.appData,
+                },
+                ({ id }: any) => {
+                  callback({ id });
+                }
+              );
 
-  //   producer.on("trackended", () => {
-  //     console.log("track ended");
-  //   });
+              callback();
+            } catch (error: any) {
+              errback(error);
+            }
+          }
+        );
+      }
+    );
+  };
 
-  //   producer.on("transportclose", () => {
-  //     console.log("transport ended");
-  //   });
-  // };
+  const connectSendTransport = async () => {
+    if (producerTransportRef.current) {
+      producerRef.current = await producerTransportRef.current?.produce(params);
+    } else {
+      console.warn("Device is not initialized.(send transport error)");
+      return;
+    }
 
-  // const createRecvTransport = async () => {
-  //   socket.emit(
-  //     "createWebRtcTransport",
-  //     { sender: false },
-  //     ({ params }: any) => {
-  //       if (params.error) {
-  //         console.error(params.error);
-  //         return;
-  //       }
+    producerRef.current?.on("trackended", () => {
+      console.log("track ended");
+    });
+    producerRef.current?.on("transportclose", () => {
+      console.log("transport ended");
+    });
+  };
 
-  //       consumerTransport = device.createRecvTransport(params);
+  const createRecvTransport = async () => {
+    await socket.emit(
+      "createWebRtcTransport",
+      { sender: false },
+      ({ params }: any) => {
+        if (params.error) {
+          console.log(params.error);
+          return;
+        }
+        console.log(params);
 
-  //       consumerTransport.on(
-  //         "connect",
-  //         async ({ dtlsParameters }, callback, errback) => {
-  //           try {
-  //             await socket.emit("transport-recv-connect", { dtlsParameters });
-  //             callback();
-  //           } catch (error: any) {
-  //             errback(error);
-  //           }
-  //         }
-  //       );
-  //     }
-  //   );
-  // };
+        if (deviceRef.current) {
+          consumerTransportRef.current =
+            deviceRef.current?.createRecvTransport(params);
+        } else {
+          console.warn(
+            "Device is not initialized.(createWebRtcTransport error)"
+          );
+          return;
+        }
 
-  // const connectRecvTransport = async () => {
-  //   socket.emit(
-  //     "consume",
-  //     { rtpCapabilities: device.rtpCapabilities },
-  //     async ({ params }: any) => {
-  //       if (params.error) {
-  //         console.error("Cannot Consume");
-  //         return;
-  //       }
+        consumerTransportRef.current?.on(
+          "connect",
+          async ({ dtlsParameters }: any, callback: any, errback: any) => {
+            try {
+              await socket.emit("transport-recv-connect", {
+                //transportId: consumerTransportRef.current?.id,
+                dtlsParameters: dtlsParameters,
+              });
 
-  //       consumer = await consumerTransport.consume({
-  //         id: params.id,
-  //         producerId: params.producerId,
-  //         kind: params.kind,
-  //         rtpParameters: params.rtpParameters,
-  //       });
+              callback();
+            } catch (error) {
+              errback(error);
+            }
+          }
+        );
+      }
+    );
+  };
 
-  //       const { track } = consumer;
-  //       if (remoteVideoRef.current) {
-  //         remoteVideoRef.current.srcObject = new MediaStream([track]);
-  //       }
+  const connectRecvTransport = async () => {
+    socket.emit(
+      "consume",
+      {
+        rtpCapabilities: deviceRef.current?.rtpCapabilities,
+      },
+      async ({ params }: any) => {
+        if (params.error) {
+          console.error("Cannot Consume");
+          return;
+        }
+        console.log(params);
 
-  //       socket.emit("consumer-resume");
-  //     }
-  //   );
-  // };
+        if (consumerTransportRef.current) {
+          consumerRef.current = await consumerTransportRef.current?.consume({
+            id: params.id,
+            producerId: params.producerId,
+            kind: params.kind,
+            rtpParameters: params.rtpParameters,
+          });
+
+          const { track } = consumerRef.current;
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = new MediaStream([track]);
+          }
+          socket.emit("consumer-resume");
+        } else {
+          console.warn("Device is not initialized.(consume error)");
+          return;
+        }
+      }
+    );
+  };
 
   return (
-    // <div className="flex flex-col items-center p-4 space-y-4">
-    //   <div className="grid grid-cols-2 gap-4">
-    //     <div className="bg-black">
-    //       <video ref={localVideoRef} autoPlay className="w-96"></video>
-    //     </div>
-    //     <div className="bg-black">
-    //       <video ref={remoteVideoRef} autoPlay className="w-96"></video>
-    //     </div>
-    //   </div>
-    //   <button
-    //     onClick={getLocalStream}
-    //     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    //   >
-    //     Get Local Video
-    //   </button>
-    //   <button
-    //     onClick={getRtpCapabilities}
-    //     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    //   >
-    //     Get RTP Capabilities
-    //   </button>
-    //   <button
-    //     onClick={createDevice}
-    //     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    //   >
-    //     Create Device
-    //   </button>
-    //   <button
-    //     onClick={createSendTransport}
-    //     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    //   >
-    //     Create Send Transport
-    //   </button>
-    //   <button
-    //     onClick={connectSendTransport}
-    //     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    //   >
-    //     Connect Send Transport & Produce
-    //   </button>
-    //   <button
-    //     onClick={createRecvTransport}
-    //     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    //   >
-    //     Create Recv Transport
-    //   </button>
-    //   <button
-    //     onClick={connectRecvTransport}
-    //     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    //   >
-    //     Connect Recv Transport & Consume
-    //   </button>
-    // </div>
     <div>
       <Button onClick={getLocalStream}>start your video</Button>
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-black">
           <video ref={localVideoRef} autoPlay className="w-96"></video>{" "}
+        </div>
+        <div className="bg-black">
+          <video ref={remoteVideoRef} autoPlay className="w-96"></video>{" "}
         </div>
       </div>
       <Button
@@ -294,6 +286,40 @@ const VideoCallPage: React.FC = () => {
         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
       >
         Get RTP Capabilities
+      </Button>
+
+      <Button
+        onClick={createDevice}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Create Device
+      </Button>
+
+      <Button
+        onClick={createSendTransport}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Create Send Transport
+      </Button>
+
+      <Button
+        onClick={connectSendTransport}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Connect Send Transport & Produce
+      </Button>
+      <button
+        onClick={createRecvTransport}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Create Recv Transport
+      </button>
+
+      <Button
+        onClick={connectRecvTransport}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Connect Recv Transport & Consume
       </Button>
     </div>
   );
