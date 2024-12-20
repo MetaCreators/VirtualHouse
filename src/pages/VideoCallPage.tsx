@@ -19,6 +19,16 @@ const VideoCallPage: React.FC = () => {
   );
   const producerRef = useRef<mediasoupClient.types.Producer | null>(null);
   const consumerRef = useRef<mediasoupClient.types.Consumer | null>(null);
+  const [params, setParams] = useState({
+    encodings: [
+      { rid: "r0", maxBitrate: 100000, scalabilityMode: "S1T3" },
+      { rid: "r1", maxBitrate: 300000, scalabilityMode: "S1T3" },
+      { rid: "r2", maxBitrate: 900000, scalabilityMode: "S1T3" },
+    ],
+    codecOptions: {
+      videoGoogleStartBitrate: 1000,
+    },
+  });
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   const socket = io("http://localhost:8080");
@@ -56,27 +66,30 @@ const VideoCallPage: React.FC = () => {
 
   console.log("reached here1");
 
-  let params: {
-    track?: MediaStreamTrack;
-    encodings: { rid: string; maxBitrate: number; scalabilityMode: string }[];
-    codecOptions: { videoGoogleStartBitrate: number };
-  } = {
-    encodings: [
-      { rid: "r0", maxBitrate: 100000, scalabilityMode: "S1T3" },
-      { rid: "r1", maxBitrate: 300000, scalabilityMode: "S1T3" },
-      { rid: "r2", maxBitrate: 900000, scalabilityMode: "S1T3" },
-    ],
-    codecOptions: {
-      videoGoogleStartBitrate: 1000,
-    },
-  };
+  // let params: any = {
+  //   encodings: [
+  //     { rid: "r0", maxBitrate: 100000, scalabilityMode: "S1T3" },
+  //     { rid: "r1", maxBitrate: 300000, scalabilityMode: "S1T3" },
+  //     { rid: "r2", maxBitrate: 900000, scalabilityMode: "S1T3" },
+  //   ],
+  //   codecOptions: {
+  //     videoGoogleStartBitrate: 1000,
+  //   },
+  // };
 
   const streamSuccess = async (stream: MediaStream) => {
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = stream;
     }
     const track = stream.getVideoTracks()[0];
-    params = { track, ...params };
+    // params = {
+    //   track,
+    //   ...params,
+    // };
+    setParams((prev) => ({
+      ...prev, // Preserve existing properties
+      track, // Add or overwrite the `track` property
+    }));
   };
 
   const getLocalStream = () => {
@@ -136,6 +149,8 @@ const VideoCallPage: React.FC = () => {
           console.warn("Device is not initialized.");
           return;
         }
+
+        console.log("reached here 1");
         producerTransportRef.current?.on(
           "connect",
           async ({ dtlsParameters }: any, callback: any, errback: any) => {
@@ -151,49 +166,62 @@ const VideoCallPage: React.FC = () => {
             }
           }
         );
+        console.log("reached here 2");
 
         producerTransportRef.current?.on(
           "produce",
           async (parameters: any, callback: any, errback: any) => {
-            console.log(parameters);
+            console.log("Produce parameters received:", parameters);
             try {
-              await socket.emit(
+              socket.emit(
                 "transport-produce",
                 {
-                  //transportId: producerTransportRef.current?.id,
                   kind: parameters.kind,
                   rtpParameters: parameters.rtpParameters,
                   appData: parameters.appData,
                 },
-                ({ id }: any) => {
-                  callback({ id });
+                (response: any) => {
+                  if (response.error) {
+                    throw new Error(response.error);
+                  }
+                  callback({ id: response.id });
                 }
               );
-
-              callback();
-            } catch (error: any) {
+            } catch (error) {
+              console.error("Error in transport-produce:", error);
               errback(error);
             }
           }
         );
+        console.log("reached here 3");
       }
     );
   };
 
   const connectSendTransport = async () => {
-    if (producerTransportRef.current) {
-      producerRef.current = await producerTransportRef.current?.produce(params);
-    } else {
-      console.warn("Device is not initialized.(send transport error)");
-      return;
-    }
+    try {
+      if (producerTransportRef.current) {
+        try {
+          producerRef.current = await producerTransportRef.current?.produce(
+            params
+          );
+        } catch (error: any) {
+          console.log("error here:", error);
+        }
+      } else {
+        console.warn("Device is not initialized.(send transport error)");
+        return;
+      }
 
-    producerRef.current?.on("trackended", () => {
-      console.log("track ended");
-    });
-    producerRef.current?.on("transportclose", () => {
-      console.log("transport ended");
-    });
+      producerRef.current?.on("trackended", () => {
+        console.log("track ended");
+      });
+      producerRef.current?.on("transportclose", () => {
+        console.log("transport ended");
+      });
+    } catch (error: any) {
+      console.dir("error from connectSendTransport: ", error);
+    }
   };
 
   const createRecvTransport = async () => {
@@ -237,7 +265,7 @@ const VideoCallPage: React.FC = () => {
   };
 
   const connectRecvTransport = async () => {
-    socket.emit(
+    await socket.emit(
       "consume",
       {
         rtpCapabilities: deviceRef.current?.rtpCapabilities,
