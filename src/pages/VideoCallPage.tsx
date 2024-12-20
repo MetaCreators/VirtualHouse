@@ -31,7 +31,7 @@ const VideoCallPage: React.FC = () => {
   });
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
-  const socket = io("http://localhost:8080");
+  const socket = io("https://localhost:8080");
   console.log("reached here");
 
   useEffect(() => {
@@ -219,7 +219,7 @@ const VideoCallPage: React.FC = () => {
           console.log(params.error);
           return;
         }
-        console.log(params);
+        console.log("Received transport params:", params);
 
         if (deviceRef.current) {
           consumerTransportRef.current =
@@ -230,22 +230,34 @@ const VideoCallPage: React.FC = () => {
           );
           return;
         }
+        console.log("i did reach here");
+        //some error here=>this part is not being triggered,nor does it give any error
+        try {
+          consumerTransportRef.current?.on(
+            "connect",
+            async ({ dtlsParameters }: any, callback: any, errback: any) => {
+              console.log(
+                "Connect event triggered with dtlsParameters:",
+                dtlsParameters
+              );
+              try {
+                //
+                await socket.emit("transport-recv-connect", {
+                  //transportId: consumerTransportRef.current?.id,
+                  dtlsParameters: dtlsParameters,
+                });
 
-        consumerTransportRef.current?.on(
-          "connect",
-          async ({ dtlsParameters }: any, callback: any, errback: any) => {
-            try {
-              await socket.emit("transport-recv-connect", {
-                //transportId: consumerTransportRef.current?.id,
-                dtlsParameters: dtlsParameters,
-              });
-
-              callback();
-            } catch (error) {
-              errback(error);
+                callback();
+              } catch (error) {
+                errback(error);
+              }
             }
-          }
-        );
+          );
+        } catch (error: any) {
+          console.log("error in emitting transport-recv-connect :", error);
+        }
+
+        console.log("but did i reach here?");
       }
     );
   };
