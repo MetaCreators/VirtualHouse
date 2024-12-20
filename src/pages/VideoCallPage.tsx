@@ -66,29 +66,15 @@ const VideoCallPage: React.FC = () => {
 
   console.log("reached here1");
 
-  // let params: any = {
-  //   encodings: [
-  //     { rid: "r0", maxBitrate: 100000, scalabilityMode: "S1T3" },
-  //     { rid: "r1", maxBitrate: 300000, scalabilityMode: "S1T3" },
-  //     { rid: "r2", maxBitrate: 900000, scalabilityMode: "S1T3" },
-  //   ],
-  //   codecOptions: {
-  //     videoGoogleStartBitrate: 1000,
-  //   },
-  // };
-
   const streamSuccess = async (stream: MediaStream) => {
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = stream;
     }
     const track = stream.getVideoTracks()[0];
-    // params = {
-    //   track,
-    //   ...params,
-    // };
+
     setParams((prev) => ({
-      ...prev, // Preserve existing properties
-      track, // Add or overwrite the `track` property
+      ...prev,
+      track,
     }));
   };
 
