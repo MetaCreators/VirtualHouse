@@ -19,6 +19,7 @@ const VideoCallPage: React.FC = () => {
   );
   const producerRef = useRef<mediasoupClient.types.Producer | null>(null);
   const consumerRef = useRef<mediasoupClient.types.Consumer | null>(null);
+  const [isProducer, setIsProducer] = useState(false);
   const [params, setParams] = useState({
     encodings: [
       { rid: "r0", maxBitrate: 100000, scalabilityMode: "S1T3" },
@@ -39,8 +40,9 @@ const VideoCallPage: React.FC = () => {
       console.log("Client connected, socket ID: " + socket.id);
     });
 
-    socket.on("connection-success", ({ socketId }: any) => {
+    socket.on("connection-success", ({ socketId, existsProducer }: any) => {
       console.log("Received socket ID: " + socketId);
+      console.log("Does a producer exist " + existsProducer);
     });
 
     socket.on("connect_error", (err: any) => {
@@ -66,7 +68,7 @@ const VideoCallPage: React.FC = () => {
 
   console.log("reached here1");
 
-  const streamSuccess = async (stream: MediaStream) => {
+  const streamSuccess = (stream: MediaStream) => {
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = stream;
     }
@@ -76,6 +78,8 @@ const VideoCallPage: React.FC = () => {
       ...prev,
       track,
     }));
+
+    goConnect(true);
   };
 
   const getLocalStream = () => {
@@ -91,16 +95,38 @@ const VideoCallPage: React.FC = () => {
       .catch((error) => console.log(error.message));
   };
 
+  const goConsume = () => {
+    goConnect(false);
+  };
+
+  const goConnect = (producerOrConsumer: any) => {
+    setIsProducer(producerOrConsumer);
+    console.log("device value is ", deviceRef.current);
+
+    if (deviceRef.current === undefined) {
+      getRtpCapabilities();
+    } else {
+      goCreateTransport();
+    }
+  };
+
+  const goCreateTransport = () => {
+    if (isProducer) {
+      createSendTransport();
+    } else {
+      createRecvTransport();
+    }
+  };
   const createDevice = async () => {
     try {
       const device = new mediasoupClient.Device();
-      deviceRef.current = device;
-      if (rtpCapabilities) {
-        await device.load({ routerRtpCapabilities: rtpCapabilities });
-        console.log("RTP Capabilities", device.rtpCapabilities);
-      } else {
-        console.warn("RTP Capabilities not set");
+      if (!rtpCapabilities) {
+        throw new Error("RTP Capabilities are null or undefined.");
       }
+      await device.load({ routerRtpCapabilities: rtpCapabilities });
+      deviceRef.current = device;
+      console.log("Device initialized successfully");
+      goCreateTransport();
     } catch (error) {
       console.error(error);
       if ((error as any).name === "UnsupportedError") {
@@ -110,9 +136,10 @@ const VideoCallPage: React.FC = () => {
   };
 
   const getRtpCapabilities = async () => {
-    await socket.emit("getRtpCapabilities", (data: any) => {
+    await socket.emit("createRoom", (data: any) => {
       console.log(`Router RTP Capabilities... ${data.rtpCapabilities}`);
       setRtpCapabilities(data.rtpCapabilities);
+      createDevice();
     });
   };
 
@@ -180,6 +207,7 @@ const VideoCallPage: React.FC = () => {
           }
         );
         console.log("reached here 3");
+        connectSendTransport();
       }
     );
   };
@@ -258,6 +286,7 @@ const VideoCallPage: React.FC = () => {
         }
 
         console.log("but did i reach here?");
+        connectRecvTransport();
       }
     );
   };
@@ -347,6 +376,9 @@ const VideoCallPage: React.FC = () => {
       >
         Connect Recv Transport & Consume
       </Button>
+
+      <Button onClick={getLocalStream}>publish</Button>
+      <Button onClick={goConsume}>consume</Button>
     </div>
   );
 };
