@@ -63,7 +63,7 @@ const VirtualSpace = () => {
             break;
 
           case "chat":
-            setLatestMessage(`${message.userId}: ${message.message}`);
+            setLatestMessage(`by user ${message.userId}: ${message.message}`);
             break;
 
           case "proximity":
@@ -192,7 +192,7 @@ const VirtualSpace = () => {
         sendMessage={sendMessage}
       />
 
-      <div className="absolute top-4 right-4 bg-white p-2 rounded shadow">
+      {/* <div className="absolute top-4 right-4 bg-white p-2 rounded shadow">
         <div>Latest message: {latestMessage}</div>
       </div>
       <div className="absolute top-16 right-4 bg-white p-2 rounded shadow">
@@ -202,7 +202,7 @@ const VirtualSpace = () => {
           placeholder="Type a message"
         />
         <button onClick={sendMessage}>Send</button>
-      </div>
+      </div> */}
       {proximityMessage && (
         <div className="absolute top-28 right-4 bg-red-100 text-red-600 p-2 rounded shadow">
           {proximityMessage}
