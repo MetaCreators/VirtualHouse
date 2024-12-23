@@ -19,8 +19,8 @@ const GroupChat: React.FC<GroupChatProps> = ({
   return (
     <div className="flex">
       <div className="absolute top-4 right-80 bg-white p-2 rounded shadow">
-        <div className="border py-1 px-3 bg-indigo-600 rounded-xl font-semibold text-white">
-          All Chats appear here
+        <div className="border py-1 px-3 bg-indigo-600 rounded-xl font-semibold text-white text-center">
+          Messages
         </div>
         {latestMessage.map((item) => (
           <div key={item.userId} className="flex">
