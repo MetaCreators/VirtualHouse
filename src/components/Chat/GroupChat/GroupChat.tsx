@@ -64,6 +64,11 @@ const GroupChat: React.FC<GroupChatProps> = ({
           <input
             value={userMsg}
             onChange={(e) => setUserMsg(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && userMsg.trim()) {
+                sendMessage();
+              }
+            }}
             placeholder="Type a message"
             className="border rounded-md placeholder:p-2 p-1"
           />
