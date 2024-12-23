@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ChatMessage } from "@/types/ChatTypes";
-import { ChevronRightCircle, Lock } from "lucide-react";
+import { ChevronRightCircle, Lock, User2 } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 
 interface GroupChatProps {
@@ -18,14 +18,19 @@ const GroupChat: React.FC<GroupChatProps> = ({
 }) => {
   return (
     <div className="flex">
-      <div className="absolute top-4 right-80 bg-white p-2 rounded shadow">
+      <div className="absolute top-4 right-80 bg-white p-2 rounded shadow w-56">
         <div className="border py-1 px-3 bg-indigo-600 rounded-xl font-semibold text-white text-center">
           Messages
         </div>
         {latestMessage.map((item) => (
-          <div key={item.userId} className="flex">
-            <div>user {item.userId}:</div>
-            <div>{item.message}</div>
+          <div key={item.userId} className="flex items-center border mt-2">
+            <div className="border">
+              <User2 />
+            </div>
+            <div className="border w-full">
+              <div>user {item.userId}</div>
+              <div>{item.message}</div>
+            </div>
           </div>
         ))}
       </div>
