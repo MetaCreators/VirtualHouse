@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { ChatMessage } from "@/types/ChatTypes";
 import { ChevronRightCircle, Lock } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 
 interface GroupChatProps {
-  latestMessage: string;
+  latestMessage: ChatMessage[] | [];
   userMsg: string;
   setUserMsg: Dispatch<SetStateAction<string>>;
   sendMessage: () => void;
@@ -16,9 +17,15 @@ const GroupChat: React.FC<GroupChatProps> = ({
   sendMessage,
 }) => {
   return (
-    <div>
-      <div className="absolute top-4 right-4 bg-white p-2 rounded shadow">
-        <div>Latest message: {latestMessage}</div>
+    <div className="flex">
+      <div className="absolute top-4 right-80 bg-white p-2 rounded shadow">
+        <div>All Chats appear here</div>
+        {latestMessage.map((item) => (
+          <div key={item.userId} className="flex">
+            <div>user {item.userId} says:</div>
+            <div>{item.message}</div>
+          </div>
+        ))}
       </div>
       <div className="absolute top-16 right-4 bg-white p-2 rounded-lg shadow flex justify-center items-center space-x-2 pr-2">
         <div className="space-y-1">

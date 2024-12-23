@@ -5,6 +5,7 @@ import OtherUser from "@/components/UserAvatar/OtherUser";
 import { handleKeyPress } from "@/lib/helperFns/handleKeyPress";
 import UserDetails from "@/components/UserDetails/UserDetails";
 import GroupChat from "@/components/Chat/GroupChat/GroupChat";
+import { ChatMessage } from "@/types/ChatTypes";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -13,7 +14,7 @@ const VirtualSpace = () => {
   const [otherUsers, setOtherUsers] = useState<
     Array<{ id: string; position: { x: number; y: number } }>
   >([]);
-  const [latestMessage, setLatestMessage] = useState("");
+  const [latestMessage, setLatestMessage] = useState<ChatMessage[] | []>([]);
   const [userMsg, setUserMsg] = useState("");
   const [proximityMessage, setProximityMessage] = useState<string | null>(null);
 
@@ -63,7 +64,13 @@ const VirtualSpace = () => {
             break;
 
           case "chat":
-            setLatestMessage(`by user ${message.userId}: ${message.message}`);
+            //setLatestMessage(`by user ${message.userId}: ${message.message}`);
+            setLatestMessage((prev) => {
+              return [
+                ...prev,
+                { userId: message.userId, message: message.message },
+              ];
+            });
             break;
 
           case "proximity":
@@ -191,20 +198,8 @@ const VirtualSpace = () => {
         setUserMsg={setUserMsg}
         sendMessage={sendMessage}
       />
-
-      {/* <div className="absolute top-4 right-4 bg-white p-2 rounded shadow">
-        <div>Latest message: {latestMessage}</div>
-      </div>
-      <div className="absolute top-16 right-4 bg-white p-2 rounded shadow">
-        <input
-          value={userMsg}
-          onChange={(e) => setUserMsg(e.target.value)}
-          placeholder="Type a message"
-        />
-        <button onClick={sendMessage}>Send</button>
-      </div> */}
       {proximityMessage && (
-        <div className="absolute top-28 right-4 bg-red-100 text-red-600 p-2 rounded shadow">
+        <div className="absolute top-48 right-4 bg-red-100 text-red-600 p-2 rounded shadow">
           {proximityMessage}
         </div>
       )}
