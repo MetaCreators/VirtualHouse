@@ -19,7 +19,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
 }) => {
   return (
     <div className="flex">
-      <div className="absolute top-4 right-80 bg-white p-2 rounded shadow w-56">
+      <div className="absolute top-44 right-4 bg-white p-2 rounded shadow w-64">
         <div className="border py-1 px-3 bg-indigo-600 rounded-xl font-semibold text-white text-center shadow">
           Messages
         </div>

@@ -199,7 +199,7 @@ const VirtualSpace = () => {
         sendMessage={sendMessage}
       />
       {proximityMessage && (
-        <div className="absolute top-48 right-4 bg-red-100 text-red-600 p-2 rounded shadow">
+        <div className="absolute top-4 right-4 bg-red-100 text-red-600 p-2 rounded shadow">
           {proximityMessage}
         </div>
       )}
