@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { ChatMessage } from "@/types/ChatTypes";
-import { ChevronRightCircle, Lock, User2 } from "lucide-react";
+import { ChevronRightCircle, Lock } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
-
+//import avatar1 from "../../assets/avatar1.jpeg";
+import avatar1 from "../../../assets/avatar1.jpeg";
 interface GroupChatProps {
   latestMessage: ChatMessage[] | [];
   userMsg: string;
@@ -19,20 +20,33 @@ const GroupChat: React.FC<GroupChatProps> = ({
   return (
     <div className="flex">
       <div className="absolute top-4 right-80 bg-white p-2 rounded shadow w-56">
-        <div className="border py-1 px-3 bg-indigo-600 rounded-xl font-semibold text-white text-center">
+        <div className="border py-1 px-3 bg-indigo-600 rounded-xl font-semibold text-white text-center shadow">
           Messages
         </div>
-        {latestMessage.map((item) => (
-          <div key={item.userId} className="flex items-center border mt-2">
-            <div className="border">
-              <User2 />
+        <div>
+          {latestMessage.map((item) => (
+            <div key={item.userId} className="flex items-center mt-2">
+              <div className="flex justify-center items-center">
+                <img src={avatar1} className="rounded-lg h-8 w-9" />
+              </div>
+              <div className="w-full pl-2">
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-slate-500">
+                    user {item.userId}
+                  </div>
+                  <div className="text-xs font-light text-slate-500">
+                    {new Date().toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </div>
+                </div>
+                <div>{item.message}</div>
+              </div>
             </div>
-            <div className="border w-full">
-              <div>user {item.userId}</div>
-              <div>{item.message}</div>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       <div className="absolute top-16 right-4 bg-white p-2 rounded-lg shadow flex justify-center items-center space-x-2 pr-2">
         <div className="space-y-1">
