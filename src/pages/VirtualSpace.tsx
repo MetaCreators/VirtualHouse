@@ -6,6 +6,7 @@ import { handleKeyPress } from "@/lib/helperFns/handleKeyPress";
 import UserDetails from "@/components/UserDetails/UserDetails";
 import GroupChat from "@/components/Chat/GroupChat/GroupChat";
 import { ChatMessage } from "@/types/ChatTypes";
+import { Game } from "@/metaverse/Game";
 
 const VirtualSpace = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -20,6 +21,7 @@ const VirtualSpace = () => {
 
   useEffect(() => {
     const socket = new WebSocket(import.meta.env.VITE_WS_SERVER_URL);
+    console.log(socket);
 
     const handleOpen = () => {
       console.log("Connected to Server");
@@ -172,7 +174,7 @@ const VirtualSpace = () => {
           transition: "transform 0.1s linear",
         }}
       >
-        <div
+        {/* <div
           className="absolute"
           style={{
             width: "3000px",
@@ -183,7 +185,9 @@ const VirtualSpace = () => {
             left: "-1500px",
             top: "-1500px",
           }}
-        />
+        /> */}
+
+        <Game />
 
         <CurrentUser x={position.x} y={position.y} />
         {otherUsers.map((user) => (
